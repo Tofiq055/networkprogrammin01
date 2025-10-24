@@ -26,6 +26,11 @@ def log_line(path, text):
 def chat_server(host, port):
     srv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     srv.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    if args.rcvbuf>0: srv.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, args.rcvbuf)
+    if args.sndbuf>0: srv.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, args.sndbuf)
+    if args.timeout>0: srv.settimeout(args.timeout)
+    if args.nonblock: srv.setblocking(False)
+
     srv.bind((host, port))
     srv.listen(BACKLOG)
     print(f"[server] listening on {host}:{port}")
@@ -169,6 +174,11 @@ def main():
     parser.add_argument("--host", default="127.0.0.1")   #  127.0.0.1 for local tests
     parser.add_argument("--port", type=int, required=True)
     parser.add_argument("--name", default="guest")       # client nickname
+    parser.add_argument("--timeout", type=float, default=0.0)
+    parser.add_argument("--rcvbuf", type=int, default=0)      #error and settings demo
+    parser.add_argument("--sndbuf", type=int, default=0)
+    parser.add_argument("--nonblock", action="store_true")
+
     args = parser.parse_args()
 
     if args.mode == "server":

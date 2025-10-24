@@ -1,38 +1,66 @@
-import socket
-import sys
-import argparse
+
+import socket, sys, argparse
+
 host = 'localhost'
 data_payload = 2048
 backlog = 5
-def echo_server(port):
-    """ A simple echo server """
-    # Create a TCP socket
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    # Enable reuse address/port
-    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    # Bind the socket to the port
+
+def echo_server(port, timeout, rcvbuf, sndbuf, nonblock, logpath):
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)              
+    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)            
+
+    # settings for Module E
+    if rcvbuf > 0: sock.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, rcvbuf)
+    if sndbuf > 0: sock.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, sndbuf)
+    if timeout > 0: sock.settimeout(timeout)
+    if nonblock: sock.setblocking(False)
+
     server_address = (host, port)
-    print("Starting up echo server on %s port %s" % server_address)
-    sock.bind(server_address)
-    # Listen to clients, backlog argument specifies the max no. of queued connections
-    sock.listen(backlog)
-    while True:
-        print("Waiting to receive message from client")
-        client, address = sock.accept()
-        data = client.recv(data_payload)
-        if data:
-            print("Data: %s" %data)
-            client.send(data)
-            print("sent %s bytes back to %s" % (data, address))
-        # end connection
-        client.close()
+    print(f"[server] bind {server_address}  (timeout={timeout}, rcvbuf={rcvbuf}, sndbuf={sndbuf}, nonblock={nonblock})")
+    if logpath: open(logpath, "a", encoding="utf-8").write("[server] settings applied\n")
+
+    try:
+        sock.bind(server_address)                                         
+        sock.listen(backlog)                                              
+        while True:
+            print("[server] waiting for client...")
+            try:
+                client, address = sock.accept()                           
+            except socket.timeout:
+                print("[server] accept timeout")
+                continue
+            except BlockingIOError:
+                print("[server] accept would block (non-blocking). retrying...")
+                continue
+
+            print(f"[server] client connected: {address}")
+            try:
+                data = client.recv(data_payload)                          
+                print(f"[server] recv bytes={len(data) if data else 0}")
+                if data:
+                    client.send(data)                                     
+                    print(f"[server] sent echo to {address}")
+            except socket.timeout:
+                print("[server] recv/send timeout")
+            except ConnectionResetError:
+                print("[server] client reset connection")
+            except BlockingIOError:
+                print("[server] recv/send would block (non-blocking)")
+            finally:
+                client.close()                                           
+    except OSError as e:
+        print(f"[server] OS error: {e}")
+    finally:
+        sock.close()
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Socket Server Example')
-    parser.add_argument('--port', action="store", dest="port", type=int, required=True)
-    given_args = parser.parse_args()
-    port = given_args.port
-    echo_server(port)
-
-
-# python 13-server-tcp.py --port=9900
+    p = argparse.ArgumentParser(description='Socket Server Example')
+    p.add_argument('--port', type=int, required=True)
+    # NEW flags for Module E
+    p.add_argument('--timeout', type=float, default=0.0)
+    p.add_argument('--rcvbuf', type=int, default=0)
+    p.add_argument('--sndbuf', type=int, default=0)
+    p.add_argument('--nonblock', action='store_true')
+    p.add_argument('--log', default='')
+    a = p.parse_args()
+    echo_server(a.port, a.timeout, a.rcvbuf, a.sndbuf, a.nonblock, a.log)
