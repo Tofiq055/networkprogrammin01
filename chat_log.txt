@@ -1,0 +1,16 @@
+[2025-10-25 01:13:33] * ali joined from ('127.0.0.1', 64849)
+[2025-10-25 01:13:37] [send] ali: asdsadsadsad
+[2025-10-25 01:13:37] ali: asdsadsadsad
+[2025-10-25 01:13:53] [send] ali: hello
+[2025-10-25 01:13:53] ali: hello
+[2025-10-25 01:15:51] * vali joined from ('127.0.0.1', 65203)
+[2025-10-25 01:15:51] [recv] * vali joined from ('127.0.0.1', 65203)
+[2025-10-25 01:15:55] [send] vali: selam ben vali
+[2025-10-25 01:15:55] vali: selam ben vali
+[2025-10-25 01:15:55] [recv] vali: selam ben vali
+[2025-10-25 01:16:02] [send] ali: ben ali
+[2025-10-25 01:16:02] ali: ben ali
+[2025-10-25 01:16:02] [recv] ali: ben ali
+[2025-10-25 01:16:23] * vali left
+[2025-10-25 01:16:23] [recv] * vali left
+[2025-10-25 01:16:32] * ali left
